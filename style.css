@@ -352,7 +352,8 @@ body {
 .game-grid {
   flex: 1;
   display: grid;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .player-col {
@@ -554,8 +555,8 @@ body {
 }
 
 .tally-svg {
-  width: clamp(28px, 8vw, 52px);
-  height: clamp(28px, 8vw, 52px);
+  width: clamp(36px, 10.4vw, 68px);
+  height: clamp(36px, 10.4vw, 68px);
 }
 
 /* ── Add X modal ──────────────────────────────────────── */

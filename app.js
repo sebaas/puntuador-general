@@ -408,7 +408,7 @@ function buildGameScreen() {
   scores = new Array(config.playerCount).fill(0);
   gameHistory = [];
   if (pendingAdd1) { clearTimeout(pendingAdd1.timerId); pendingAdd1 = null; }
-  gameGrid.style.gridTemplateColumns = `repeat(${config.playerCount}, 1fr)`;
+  gameGrid.style.gridTemplateColumns = `repeat(${config.playerCount}, minmax(110px, 1fr))`;
   gameGrid.innerHTML = '';
 
   config.playerNames.forEach((name, i) => {
