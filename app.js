@@ -293,13 +293,26 @@ const gameGrid = document.getElementById('game-grid');
 let scores = [];
 let pendingPlayerIndex = -1;
 
-// History log: [{ playerIndex, name, delta, total }]
+// History log: [{ playerIndex, name, delta, total, round }]
 let gameHistory = [];
 
-// Pending add-1 group: { playerIndex, delta, timerId }
+// Pending add-1 group: { playerIndex, delta, round, timerId }
 let pendingAdd1 = null;
 
 const GROUP_TIMEOUT_MS = 10000;
+const ROUND_TIMEOUT_MS = 45000;
+
+let currentRound = 0;
+let lastScoreTimestamp = null;
+
+function checkRound() {
+  const now = Date.now();
+  if (currentRound === 0 || now - lastScoreTimestamp > ROUND_TIMEOUT_MS) {
+    currentRound++;
+  }
+  lastScoreTimestamp = now;
+  return currentRound;
+}
 
 function flushPendingAdd1() {
   if (!pendingAdd1) return;
@@ -310,17 +323,19 @@ function flushPendingAdd1() {
     name:        config.playerNames[i],
     delta:       pendingAdd1.delta,
     total:       scores[i],
+    round:       pendingAdd1.round,
   });
   pendingAdd1 = null;
   updateUndoBtn(i);
 }
 
-function logHistoryEntry(playerIndex, delta) {
+function logHistoryEntry(playerIndex, delta, round) {
   gameHistory.push({
     playerIndex,
     name:  config.playerNames[playerIndex],
     delta,
     total: scores[playerIndex],
+    round,
   });
 }
 
@@ -437,6 +452,8 @@ function updateScore(i) {
 function buildGameScreen() {
   scores = new Array(config.playerCount).fill(0);
   gameHistory = [];
+  currentRound = 0;
+  lastScoreTimestamp = null;
   if (pendingAdd1) { clearTimeout(pendingAdd1.timerId); pendingAdd1 = null; }
   gameGrid.style.gridTemplateColumns = `repeat(${config.playerCount}, minmax(110px, 1fr))`;
   gameGrid.innerHTML = '';
@@ -462,8 +479,9 @@ function buildGameScreen() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const i = parseInt(btn.dataset.minus);
+      const round = checkRound();
       scores[i]--;
-      logHistoryEntry(i, -1);
+      logHistoryEntry(i, -1, round);
       updateScore(i);
     });
   });
@@ -480,6 +498,7 @@ function buildGameScreen() {
       const i = parseInt(col.dataset.col);
       if (config.pointing === 'add1') {
         if (config.capAtTarget && config.useTarget && scores[i] >= config.targetPoints) return;
+        const round = checkRound();
         scores[i]++;
         // Set up pendingAdd1 before updateScore so updateUndoBtn sees it
         if (pendingAdd1 && pendingAdd1.playerIndex === i) {
@@ -487,7 +506,7 @@ function buildGameScreen() {
           pendingAdd1.delta++;
         } else {
           flushPendingAdd1();
-          pendingAdd1 = { playerIndex: i, delta: 1, timerId: null };
+          pendingAdd1 = { playerIndex: i, delta: 1, round, timerId: null };
         }
         pendingAdd1.timerId = setTimeout(flushPendingAdd1, GROUP_TIMEOUT_MS);
         updateScore(i);
@@ -530,6 +549,7 @@ function closeModal() {
 function confirmModal(sign) {
   const val = parseFloat(modalInput.value);
   if (isNaN(val) || val === 0) { closeModal(); return; }
+  const round = checkRound();
   const prevScore = scores[pendingPlayerIndex];
   let delta = sign * Math.abs(val);
   scores[pendingPlayerIndex] += delta;
@@ -538,7 +558,7 @@ function confirmModal(sign) {
   }
   delta = scores[pendingPlayerIndex] - prevScore;
   if (delta === 0) { closeModal(); return; }
-  logHistoryEntry(pendingPlayerIndex, delta);
+  logHistoryEntry(pendingPlayerIndex, delta, round);
   updateScore(pendingPlayerIndex);
   closeModal();
 }
@@ -581,7 +601,15 @@ function buildHistoryScreen() {
 
   historyList.innerHTML = '<div class="history-start">Game start</div>';
 
+  let lastRound = 0;
   gameHistory.forEach(entry => {
+    if (entry.round !== lastRound) {
+      lastRound = entry.round;
+      const header = document.createElement('div');
+      header.className = 'history-round';
+      header.textContent = `Round ${entry.round}`;
+      historyList.appendChild(header);
+    }
     const sign = entry.delta > 0 ? '+' : '';
     const row  = document.createElement('div');
     row.className = 'history-entry';
