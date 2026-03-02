@@ -9,6 +9,7 @@ const config = {
   targetPoints: 30,
   useTarget: false,
   useHalfTarget: false,
+  capAtTarget: false,
 };
 
 // Screens
@@ -68,7 +69,7 @@ function bindSegControl(containerSelector, configKey) {
   });
 }
 
-const PRESET_SECTIONS = ['opt-pointing', 'opt-display', 'opt-negative', 'opt-target', 'opt-half-target'];
+const PRESET_SECTIONS = ['opt-pointing', 'opt-display', 'opt-negative', 'opt-target', 'opt-half-target', 'opt-cap-target'];
 
 function setConfigPresetMode(isPreset) {
   PRESET_SECTIONS.forEach(id => document.getElementById(id).classList.toggle('hidden', isPreset));
@@ -82,9 +83,11 @@ btnStart.addEventListener('click', () => {
   config.targetPoints = 30;
   config.useTarget = false;
   config.useHalfTarget = false;
+  config.capAtTarget = false;
   document.getElementById('input-target').value = 30;
   document.getElementById('input-target').classList.add('hidden');
   document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = true;
+  document.querySelector('#opt-cap-target .seg-btn[data-value="on"]').disabled = true;
   updateStepper();
   updatePointingSubOptions();
   // Reset seg controls to default active states
@@ -93,6 +96,7 @@ btnStart.addEventListener('click', () => {
   resetSegControl('#opt-negative', 'positive');
   resetSegControl('#opt-target', 'none');
   resetSegControl('#opt-half-target', 'off');
+  resetSegControl('#opt-cap-target', 'off');
   setConfigPresetMode(false);
   showScreen(screenConfig);
 });
@@ -117,6 +121,11 @@ bindSegControl('#opt-pointing', 'pointing');
 bindSegControl('#opt-display', 'display');
 bindSegControl('#opt-negative', 'negative');
 
+document.getElementById('input-target').addEventListener('input', () => {
+  const val = parseInt(document.getElementById('input-target').value);
+  if (!isNaN(val) && val > 0) config.targetPoints = val;
+});
+
 // Target points toggle
 document.querySelectorAll('#opt-target .seg-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -125,9 +134,12 @@ document.querySelectorAll('#opt-target .seg-btn').forEach(btn => {
     config.useTarget = btn.dataset.value === 'custom';
     document.getElementById('input-target').classList.toggle('hidden', !config.useTarget);
     document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = !config.useTarget;
+    document.querySelector('#opt-cap-target .seg-btn[data-value="on"]').disabled = !config.useTarget;
     if (!config.useTarget) {
       config.useHalfTarget = false;
       resetSegControl('#opt-half-target', 'off');
+      config.capAtTarget = false;
+      resetSegControl('#opt-cap-target', 'off');
     }
   });
 });
@@ -138,6 +150,15 @@ document.querySelectorAll('#opt-half-target .seg-btn').forEach(btn => {
     document.querySelectorAll('#opt-half-target .seg-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     config.useHalfTarget = btn.dataset.value === 'on';
+  });
+});
+
+// Cap at target toggle
+document.querySelectorAll('#opt-cap-target .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#opt-cap-target .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    config.capAtTarget = btn.dataset.value === 'on';
   });
 });
 
@@ -178,6 +199,7 @@ document.getElementById('btn-truco').addEventListener('click', () => {
   config.targetPoints = 30;
   config.useTarget    = true;
   config.useHalfTarget = true;
+  config.capAtTarget  = true;
   playersBackScreen   = screenHome;
   buildPlayersScreen();
   showScreen(screenPlayers);
@@ -191,9 +213,11 @@ document.getElementById('btn-flip7').addEventListener('click', () => {
   config.targetPoints  = 200;
   config.useTarget     = true;
   config.useHalfTarget = true;
+  config.capAtTarget   = false;
   document.getElementById('input-target').value = 200;
   document.getElementById('input-target').classList.remove('hidden');
   document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = false;
+  document.querySelector('#opt-cap-target .seg-btn[data-value="on"]').disabled = false;
   updateStepper();
   updatePointingSubOptions();
   resetSegControl('#opt-pointing', 'addx');
@@ -201,6 +225,7 @@ document.getElementById('btn-flip7').addEventListener('click', () => {
   resetSegControl('#opt-negative', 'positive');
   resetSegControl('#opt-target', 'custom');
   resetSegControl('#opt-half-target', 'on');
+  resetSegControl('#opt-cap-target', 'off');
   setConfigPresetMode(true);
   showScreen(screenConfig);
 });
@@ -213,9 +238,11 @@ document.getElementById('btn-sushigo').addEventListener('click', () => {
   config.targetPoints  = 30;
   config.useTarget     = false;
   config.useHalfTarget = false;
+  config.capAtTarget   = false;
   document.getElementById('input-target').value = 30;
   document.getElementById('input-target').classList.add('hidden');
   document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = true;
+  document.querySelector('#opt-cap-target .seg-btn[data-value="on"]').disabled = true;
   updateStepper();
   updatePointingSubOptions();
   resetSegControl('#opt-pointing', 'addx');
@@ -223,6 +250,7 @@ document.getElementById('btn-sushigo').addEventListener('click', () => {
   resetSegControl('#opt-negative', 'both');
   resetSegControl('#opt-target', 'none');
   resetSegControl('#opt-half-target', 'off');
+  resetSegControl('#opt-cap-target', 'off');
   setConfigPresetMode(true);
   showScreen(screenConfig);
 });
@@ -235,9 +263,11 @@ document.getElementById('btn-nothanks').addEventListener('click', () => {
   config.targetPoints  = 30;
   config.useTarget     = false;
   config.useHalfTarget = false;
+  config.capAtTarget   = false;
   document.getElementById('input-target').value = 30;
   document.getElementById('input-target').classList.add('hidden');
   document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = true;
+  document.querySelector('#opt-cap-target .seg-btn[data-value="on"]').disabled = true;
   updateStepper();
   updatePointingSubOptions();
   resetSegControl('#opt-pointing', 'addx');
@@ -245,6 +275,7 @@ document.getElementById('btn-nothanks').addEventListener('click', () => {
   resetSegControl('#opt-negative', 'positive');
   resetSegControl('#opt-target', 'none');
   resetSegControl('#opt-half-target', 'off');
+  resetSegControl('#opt-cap-target', 'off');
   setConfigPresetMode(true);
   showScreen(screenConfig);
 });
@@ -404,7 +435,6 @@ function updateScore(i) {
 }
 
 function buildGameScreen() {
-  config.targetPoints = parseInt(document.getElementById('input-target').value) || 60;
   scores = new Array(config.playerCount).fill(0);
   gameHistory = [];
   if (pendingAdd1) { clearTimeout(pendingAdd1.timerId); pendingAdd1 = null; }
@@ -449,6 +479,7 @@ function buildGameScreen() {
     col.addEventListener('click', () => {
       const i = parseInt(col.dataset.col);
       if (config.pointing === 'add1') {
+        if (config.capAtTarget && config.useTarget && scores[i] >= config.targetPoints) return;
         scores[i]++;
         // Set up pendingAdd1 before updateScore so updateUndoBtn sees it
         if (pendingAdd1 && pendingAdd1.playerIndex === i) {
@@ -499,8 +530,14 @@ function closeModal() {
 function confirmModal(sign) {
   const val = parseFloat(modalInput.value);
   if (isNaN(val) || val === 0) { closeModal(); return; }
-  const delta = sign * Math.abs(val);
+  const prevScore = scores[pendingPlayerIndex];
+  let delta = sign * Math.abs(val);
   scores[pendingPlayerIndex] += delta;
+  if (config.capAtTarget && config.useTarget && scores[pendingPlayerIndex] > config.targetPoints) {
+    scores[pendingPlayerIndex] = config.targetPoints;
+  }
+  delta = scores[pendingPlayerIndex] - prevScore;
+  if (delta === 0) { closeModal(); return; }
   logHistoryEntry(pendingPlayerIndex, delta);
   updateScore(pendingPlayerIndex);
   closeModal();
