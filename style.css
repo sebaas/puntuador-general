@@ -768,3 +768,27 @@ body {
   opacity: 0.85;
   transform: scale(0.98);
 }
+
+/* Color swatch in seg-btn */
+.color-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  vertical-align: middle;
+}
+
+.seg-btn.active .color-swatch {
+  border-color: #0f0f0f;
+}
+
+/* Table background themes */
+.game-grid.table-bg-red .player-score-area     { background: #1a0808; }
+.game-grid.table-bg-red .player-col            { border-right-color: #2e1010; }
+.game-grid.table-bg-green .player-score-area   { background: #081a08; }
+.game-grid.table-bg-green .player-col          { border-right-color: #102e10; }
+.game-grid.table-bg-blue .player-score-area    { background: #08081a; }
+.game-grid.table-bg-blue .player-col           { border-right-color: #10102e; }
+.game-grid.table-bg-purple .player-score-area  { background: #12081a; }
+.game-grid.table-bg-purple .player-col         { border-right-color: #20102e; }

@@ -10,6 +10,8 @@ const config = {
   useTarget: false,
   useHalfTarget: false,
   capAtTarget: false,
+  tableBackground: 'black', // 'black' | 'red' | 'green' | 'blue' | 'purple'
+  boxStyle: 'white',        // 'white' | 'matchstick'
 };
 
 // Screens
@@ -56,6 +58,11 @@ function updatePointingSubOptions() {
     config.display = 'number';
     resetSegControl('#opt-display', 'number');
   }
+  updateDisplaySubOptions();
+}
+
+function updateDisplaySubOptions() {
+  document.getElementById('opt-box-style').classList.toggle('hidden', config.display !== 'box');
 }
 
 function bindSegControl(containerSelector, configKey) {
@@ -65,6 +72,7 @@ function bindSegControl(containerSelector, configKey) {
       btn.classList.add('active');
       config[configKey] = btn.dataset.value;
       if (configKey === 'pointing') updatePointingSubOptions();
+      if (configKey === 'display') updateDisplaySubOptions();
     });
   });
 }
@@ -84,6 +92,8 @@ btnStart.addEventListener('click', () => {
   config.useTarget = false;
   config.useHalfTarget = false;
   config.capAtTarget = false;
+  config.tableBackground = 'black';
+  config.boxStyle = 'white';
   document.getElementById('input-target').value = 30;
   document.getElementById('input-target').classList.add('hidden');
   document.querySelector('#opt-half-target .seg-btn[data-value="on"]').disabled = true;
@@ -97,6 +107,8 @@ btnStart.addEventListener('click', () => {
   resetSegControl('#opt-target', 'none');
   resetSegControl('#opt-half-target', 'off');
   resetSegControl('#opt-cap-target', 'off');
+  resetSegControl('#opt-table-bg', 'black');
+  resetSegControl('#opt-box-style', 'white');
   setConfigPresetMode(false);
   showScreen(screenConfig);
 });
@@ -120,6 +132,8 @@ btnIncrease.addEventListener('click', () => {
 bindSegControl('#opt-pointing', 'pointing');
 bindSegControl('#opt-display', 'display');
 bindSegControl('#opt-negative', 'negative');
+bindSegControl('#opt-table-bg', 'tableBackground');
+bindSegControl('#opt-box-style', 'boxStyle');
 
 document.getElementById('input-target').addEventListener('input', () => {
   const val = parseInt(document.getElementById('input-target').value);
@@ -200,6 +214,8 @@ document.getElementById('btn-truco').addEventListener('click', () => {
   config.useTarget    = true;
   config.useHalfTarget = true;
   config.capAtTarget  = true;
+  config.tableBackground = 'black';
+  config.boxStyle     = 'matchstick';
   playersBackScreen   = screenHome;
   buildPlayersScreen();
   showScreen(screenPlayers);
@@ -344,16 +360,35 @@ function logHistoryEntry(playerIndex, delta, round) {
 function tallyGroupSVG(n) {
   // viewBox: 40×40, drawing area padded to 32×32 inside
   const [x0, y0, x1, y1] = [4, 4, 36, 36];
-  const strokes = [
-    `<line x1="${x0}" y1="${y1}" x2="${x0}" y2="${y0}"/>`,  // 1 left  ↑
-    `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y0}"/>`,  // 2 top   →
-    `<line x1="${x1}" y1="${y0}" x2="${x1}" y2="${y1}"/>`,  // 3 right ↓
-    `<line x1="${x1}" y1="${y1}" x2="${x0}" y2="${y1}"/>`,  // 4 bottom←
-    `<line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y0}"/>`,  // 5 diag  ↗
+  const strokeDefs = [
+    { lx1: x0, ly1: y1, lx2: x0, ly2: y0 },  // 1 left  ↑  head at (x0,y1)
+    { lx1: x0, ly1: y0, lx2: x1, ly2: y0 },  // 2 top   →  head at (x0,y0)
+    { lx1: x1, ly1: y0, lx2: x1, ly2: y1 },  // 3 right ↓  head at (x1,y0)
+    { lx1: x1, ly1: y1, lx2: x0, ly2: y1 },  // 4 bottom←  head at (x1,y1)
+    { lx1: x0, ly1: y1, lx2: x1, ly2: y0 },  // 5 diag  ↗  head at (x0,y1)
   ];
-  const lines = strokes.slice(0, n).join('');
+  const isMatchstick = config.boxStyle === 'matchstick';
+  const stickColor = isMatchstick ? '#c8780a' : 'currentColor';
+
+  let lines = '';
+  const headSet = new Set();
+  for (let i = 0; i < n; i++) {
+    const s = strokeDefs[i];
+    lines += `<line x1="${s.lx1}" y1="${s.ly1}" x2="${s.lx2}" y2="${s.ly2}"/>`;
+    if (isMatchstick) headSet.add(`${s.lx1},${s.ly1}`);
+  }
+
+  let heads = '';
+  if (isMatchstick) {
+    headSet.forEach(key => {
+      const [cx, cy] = key.split(',');
+      heads += `<circle cx="${cx}" cy="${cy}" r="3" fill="#cc2200"/>`;
+    });
+  }
+
   return `<svg class="tally-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-    <g stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none">${lines}</g>
+    <g stroke="${stickColor}" stroke-width="3" stroke-linecap="round" fill="none">${lines}</g>
+    ${heads}
   </svg>`;
 }
 
@@ -456,6 +491,10 @@ function buildGameScreen() {
   lastScoreTimestamp = null;
   if (pendingAdd1) { clearTimeout(pendingAdd1.timerId); pendingAdd1 = null; }
   gameGrid.style.gridTemplateColumns = `repeat(${config.playerCount}, minmax(110px, 1fr))`;
+  gameGrid.className = 'game-grid';
+  if (config.tableBackground !== 'black') {
+    gameGrid.classList.add(`table-bg-${config.tableBackground}`);
+  }
   gameGrid.innerHTML = '';
 
   config.playerNames.forEach((name, i) => {
